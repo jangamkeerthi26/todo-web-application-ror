@@ -3,15 +3,26 @@ class TasksController < ApplicationController
 
   # GET /tasks or /tasks.json
 def index
-  case params[:filter]
-  when "pending"
-    @tasks = Task.where(completed: false)
-  when "completed"
-    @tasks = Task.where(completed: true)
-  else
-    @tasks = Task.all
+  tasks = case params[:filter]
+          when "pending"
+            Task.where(completed: false)
+          when "completed"
+            Task.where(completed: true)
+          else
+            Task.all
+          end
+
+  tasks = tasks.order(created_at: :desc)
+
+  @grouped_tasks = tasks.group_by do |task|
+    if task.created_at.month == Time.zone.now.month && task.created_at.year == Time.zone.now.year
+      task.created_at.strftime("%d %B %Y")
+    else
+      task.created_at.strftime("%B %Y")
+    end
   end
 end
+
 
   # GET /tasks/1 or /tasks/1.json
   def show
@@ -66,7 +77,8 @@ end
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_task
-      @task = Task.find(params.expect(:id))
+     @task = Task.find(params[:id])
+
     end
 
     # Only allow a list of trusted parameters through.
