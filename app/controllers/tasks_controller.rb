@@ -1,45 +1,45 @@
 class TasksController < ApplicationController
-  before_action :set_task, only: %i[ show edit update destroy ]
+  before_action :authenticate_user!
+  before_action :set_task, only: [:show, :edit, :update, :destroy]
 
-  # GET /tasks or /tasks.json
-def index
-  tasks = case params[:filter]
-          when "pending"
-            Task.where(completed: false)
-          when "completed"
-            Task.where(completed: true)
-          else
-            Task.all
-          end
+  # GET /tasks
+  def index
+    tasks = case params[:filter]
+            when "pending"
+              current_user.tasks.where(completed: false)
+            when "completed"
+              current_user.tasks.where(completed: true)
+            else
+              current_user.tasks
+            end
 
-  tasks = tasks.order(created_at: :desc)
+    tasks = tasks.order(created_at: :desc)
 
-  @grouped_tasks = tasks.group_by do |task|
-    if task.created_at.month == Time.zone.now.month && task.created_at.year == Time.zone.now.year
-      task.created_at.strftime("%d %B %Y")
-    else
-      task.created_at.strftime("%B %Y")
+    @grouped_tasks = tasks.group_by do |task|
+      if task.created_at.month == Time.zone.now.month && task.created_at.year == Time.zone.now.year
+        task.created_at.strftime("%d %B %Y")
+      else
+        task.created_at.strftime("%B %Y")
+      end
     end
   end
-end
 
-
-  # GET /tasks/1 or /tasks/1.json
+  # GET /tasks/1
   def show
   end
 
   # GET /tasks/new
   def new
-    @task = Task.new
+    @task = current_user.tasks.new
   end
 
   # GET /tasks/1/edit
   def edit
   end
 
-  # POST /tasks or /tasks.json
+  # POST /tasks
   def create
-    @task = Task.new(task_params)
+    @task = current_user.tasks.build(task_params)
 
     respond_to do |format|
       if @task.save
@@ -52,19 +52,16 @@ end
     end
   end
 
-  # PATCH/PUT /tasks/1 or /tasks/1.json
-def update
-  @task = Task.find(params[:id])
-
-  if @task.update(task_params)
-    redirect_to tasks_path, notice: "Task updated successfully."
-  else
-    render :edit, status: :unprocessable_entity
+  # PATCH/PUT /tasks/1
+  def update
+    if @task.update(task_params)
+      redirect_to tasks_path, notice: "Task updated successfully."
+    else
+      render :edit, status: :unprocessable_entity
+    end
   end
-end
 
-
-  # DELETE /tasks/1 or /tasks/1.json
+  # DELETE /tasks/1
   def destroy
     @task.destroy!
 
@@ -75,18 +72,14 @@ end
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
-    def set_task
-     @task = Task.find(params[:id])
 
-    end
+  # Load only the current user's task to prevent unauthorized access
+  def set_task
+    @task = current_user.tasks.find(params[:id])
+  end
 
-    # Only allow a list of trusted parameters through.
- private
-
-def task_params
-  params.require(:task).permit(:title, :description, :completed)
-end
-
-
+  # Strong params
+  def task_params
+    params.require(:task).permit(:title, :description, :completed)
+  end
 end
