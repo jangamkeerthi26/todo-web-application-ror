@@ -10,24 +10,40 @@
 
     <%= yield :head %>
 
-    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
-    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
-
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
-    
+
     <!-- ✅ Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
-    <!-- ✅ Rails default stylesheet -->
-    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <!-- ✅ Rails styles -->
+    <%= stylesheet_link_tag :application, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
 
   <body>
-    <!-- ✅ Container for padding & centered content -->
-    <div class="container mt-5">
+    <!-- ✅ Navbar for auth actions -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="/">📝 TodoApp</a>
+
+        <div class="d-flex ms-auto">
+          <% if user_signed_in? %>
+            <span class="navbar-text me-3">
+              👤 Logged in as <strong><%= current_user.email %></strong>
+            </span>
+           <%= button_to "Logout", destroy_user_session_path, method: :delete, class: "btn btn-outline-danger btn-sm" %>
+
+          <% else %>
+            <%= link_to "Login", new_user_session_path, class: "btn btn-outline-primary btn-sm me-2" %>
+            <%= link_to "Sign up", new_user_registration_path, class: "btn btn-outline-success btn-sm" %>
+          <% end %>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container">
       <%= yield %>
     </div>
   </body>
